@@ -1,3 +1,17 @@
+# Name: Josh Embury
+# OSU Email: emburyj@oregonstate.edu
+# Course: CS372 - Intro to Networks
+# Assignment: Programming Project 3 Traceroute
+# Due Date: 8/11/2024
+# Description: Raw socket implementation of ping traceroute.
+
+# #################################################################################################################### #
+# Citation for IcmpHelperLibrary.py:
+# Date: 08/11/2024
+# Adapted from the provided skeleton code:
+# https://canvas.oregonstate.edu/courses/1967031/assignments/9713458?module_item_id=24526095
+# #################################################################################################################### #
+
 # #################################################################################################################### #
 # Imports                                                                                                              #
 #                                                                                                                      #
@@ -207,9 +221,31 @@ class IcmpHelperLibrary:
             self.__packHeader()                 # Header is rebuilt to include new checksum value
 
         def __validateIcmpReplyPacketWithOriginalPingData(self, icmpReplyPacket):
-            # Hint: Work through comparing each value and identify if this is a valid response.
-            icmpReplyPacket.setIsValidResponse(True)
-            pass
+            # This method determines if the reply packet contains values consistent with
+            # values sent by packet.
+
+            # compare sequence numbers
+            sentSequenceNum = self.getPacketSequenceNumber()
+            receivedSequenceNum = icmpReplyPacket.getIcmpSequenceNumber()
+            seqCheck = sentSequenceNum == receivedSequenceNum
+            icmpReplyPacket.setIcmpSequence_isValid(seqCheck)
+
+            # compare identifiers
+            sentIdentifier = self.getPacketIdentifier()
+            receivedIdentifier = icmpReplyPacket.getIcmpIdentifier()
+            IdCheck = sentIdentifier == receivedIdentifier
+            icmpReplyPacket.setIcmpIdentifier_isValid(IdCheck)
+
+            # compare raw data
+            sentData = self.getDataRaw()
+            receivedData = icmpReplyPacket.getIcmpData()
+            dataCheck = sentData == receivedData
+            icmpReplyPacket.setIcmpData_isValid(dataCheck)
+
+            if seqCheck and IdCheck and dataCheck:
+                icmpReplyPacket.setIsValidResponse(True)
+            else:
+                icmpReplyPacket.setIsValidResponse(False)
 
         # ############################################################################################################ #
         # IcmpPacket Class Public Functions                                                                            #
@@ -250,6 +286,7 @@ class IcmpHelperLibrary:
                 # addr  - address of socket sending data
                 timeReceived = time.time()
                 timeLeft = timeLeft - howLongInSelect
+
                 if timeLeft <= 0:
                     print("  *        *        *        *        *    Request timed out (By no remaining time left).")
 
@@ -257,7 +294,7 @@ class IcmpHelperLibrary:
                     # Fetch the ICMP type and code from the received packet
                     icmpType, icmpCode = recvPacket[20:22]
 
-                    if icmpType == 11:                          # Time Exceeded
+                    if icmpType == 11:                          # TTL Exceeded
                         print("  TTL=%d    RTT=%.0f ms    Type=%d    Code=%d    %s" %
                                 (
                                     self.getTtl(),
@@ -283,6 +320,7 @@ class IcmpHelperLibrary:
                         icmpReplyPacket = IcmpHelperLibrary.IcmpPacket_EchoReply(recvPacket)
                         self.__validateIcmpReplyPacketWithOriginalPingData(icmpReplyPacket)
                         icmpReplyPacket.printResultToConsole(self.getTtl(), timeReceived, addr)
+                        # print(f"This is a valid response: {icmpReplyPacket.isValidResponse()}!") # for test
                         return      # Echo reply is the end and therefore should return
 
                     else:
@@ -343,6 +381,9 @@ class IcmpHelperLibrary:
         # ############################################################################################################ #
         def __init__(self, recvPacket):
             self.__recvPacket = recvPacket
+            self.IcmpIdentifier_isValid = None
+            self.IcmpSequence_isValid = None
+            self.IcmpData_isValid = None
 
         # ############################################################################################################ #
         # IcmpPacket_EchoReply Getters                                                                                 #
@@ -403,6 +444,15 @@ class IcmpHelperLibrary:
         def isValidResponse(self):
             return self.__isValidResponse
 
+        def getIcmpIdentifier_isValid(self):
+            return self.IcmpIdentifier_isValid
+
+        def getIcmpSequence_isValid(self):
+            return self.IcmpSequence_isValid
+
+        def getIcmpData_isValid(self):
+            return self.IcmpData_isValid
+
         # ############################################################################################################ #
         # IcmpPacket_EchoReply Setters                                                                                 #
         #                                                                                                              #
@@ -412,6 +462,15 @@ class IcmpHelperLibrary:
         # ############################################################################################################ #
         def setIsValidResponse(self, booleanValue):
             self.__isValidResponse = booleanValue
+
+        def setIcmpIdentifier_isValid(self, booleanValue):
+            self.IcmpIdentifier_isValid = booleanValue
+
+        def setIcmpSequence_isValid(self, booleanValue):
+            self.IcmpSequence_isValid = booleanValue
+
+        def setIcmpData_isValid(self, booleanValue):
+            self.IcmpData_isValid = booleanValue
 
         # ############################################################################################################ #
         # IcmpPacket_EchoReply Private Functions                                                                       #
@@ -494,6 +553,37 @@ class IcmpHelperLibrary:
     def __sendIcmpTraceRoute(self, host):
         print("sendIcmpTraceRoute Started...") if self.__DEBUG_IcmpHelperLibrary else 0
         # Build code for trace route here
+        '''
+        initialize data structure to hold received data ; or not..
+        TTL = 1
+        TTL_max = 50
+        pings_per_router = 3
+        create packet object x 3 with TTL
+        for i in range(TTL_max):
+            for j in range(pings_per_router):
+                create icmpPacket with current ttl
+                set dest ip address; anything else?
+                send ping with packet
+                store received packet data (rtt, source_ip, current ttl)
+            increment ttl
+
+        '''
+        receivedPackets = []
+        currentTtl = 1
+        ttlMax = 50
+        for i in range(ttlMax):
+            icmpPacket = IcmpHelperLibrary.IcmpPacket()
+            icmpPacket.setTtl(currentTtl)
+            randomIdentifier = (os.getpid() & 0xffff)      # Get as 16 bit number - Limit based on ICMP header standards
+                                                           # Some PIDs are larger than 16 bit
+
+            packetIdentifier = randomIdentifier
+            packetSequenceNumber = i
+
+            icmpPacket.buildPacket_echoRequest(packetIdentifier, packetSequenceNumber)  # Build ICMP for IP payload
+            icmpPacket.setIcmpTarget(host)
+            icmpPacket.sendEchoRequest()                                                # Build IP
+            currentTtl += 1
 
     # ################################################################################################################ #
     # IcmpHelperLibrary Public Functions                                                                               #
@@ -523,9 +613,11 @@ def main():
 
 
     # Choose one of the following by uncommenting out the line
-    icmpHelperPing.sendPing("209.233.126.254")
+    # icmpHelperPing.sendPing("209.233.126.254")
     # icmpHelperPing.sendPing("www.google.com")
+    # icmpHelperPing.sendPing("200.10.227.250") # unreachable
     # icmpHelperPing.sendPing("gaia.cs.umass.edu")
+    icmpHelperPing.traceRoute("gaia.cs.umass.edu")
     # icmpHelperPing.traceRoute("164.151.129.20")
     # icmpHelperPing.traceRoute("122.56.99.243")
 
