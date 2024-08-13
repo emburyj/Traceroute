@@ -529,13 +529,13 @@ class IcmpHelperLibrary:
     #                                                                                                                  #
     #                                                                                                                  #
     # ################################################################################################################ #
-    def __sendIcmpEchoRequest(self, host):
+    def __sendIcmpEchoRequest(self, host, ttl, num_of_pings):
         print("sendIcmpEchoRequest Started...") if self.__DEBUG_IcmpHelperLibrary else 0
 
-        for i in range(4):
+        for i in range(num_of_pings):
             # Build packet
             icmpPacket = IcmpHelperLibrary.IcmpPacket()
-
+            icmpPacket.setTtl(ttl)
             randomIdentifier = (os.getpid() & 0xffff)      # Get as 16 bit number - Limit based on ICMP header standards
                                                            # Some PIDs are larger than 16 bit
 
@@ -572,17 +572,8 @@ class IcmpHelperLibrary:
         currentTtl = 1
         ttlMax = 50
         for i in range(ttlMax):
-            icmpPacket = IcmpHelperLibrary.IcmpPacket()
+            self.__sendIcmpEchoRequest(host, currentTtl, 1)
             icmpPacket.setTtl(currentTtl)
-            randomIdentifier = (os.getpid() & 0xffff)      # Get as 16 bit number - Limit based on ICMP header standards
-                                                           # Some PIDs are larger than 16 bit
-
-            packetIdentifier = randomIdentifier
-            packetSequenceNumber = i
-
-            icmpPacket.buildPacket_echoRequest(packetIdentifier, packetSequenceNumber)  # Build ICMP for IP payload
-            icmpPacket.setIcmpTarget(host)
-            icmpPacket.sendEchoRequest()                                                # Build IP
             currentTtl += 1
 
     # ################################################################################################################ #
@@ -594,7 +585,7 @@ class IcmpHelperLibrary:
     # ################################################################################################################ #
     def sendPing(self, targetHost):
         print("ping Started...") if self.__DEBUG_IcmpHelperLibrary else 0
-        self.__sendIcmpEchoRequest(targetHost)
+        self.__sendIcmpEchoRequest(targetHost, 255, 4)
 
     def traceRoute(self, targetHost):
         print("traceRoute Started...") if self.__DEBUG_IcmpHelperLibrary else 0
@@ -613,11 +604,11 @@ def main():
 
 
     # Choose one of the following by uncommenting out the line
-    # icmpHelperPing.sendPing("209.233.126.254")
+    icmpHelperPing.sendPing("209.233.126.254")
     # icmpHelperPing.sendPing("www.google.com")
     # icmpHelperPing.sendPing("200.10.227.250") # unreachable
     # icmpHelperPing.sendPing("gaia.cs.umass.edu")
-    icmpHelperPing.traceRoute("gaia.cs.umass.edu")
+    # icmpHelperPing.traceRoute("gaia.cs.umass.edu")
     # icmpHelperPing.traceRoute("164.151.129.20")
     # icmpHelperPing.traceRoute("122.56.99.243")
 
