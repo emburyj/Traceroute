@@ -3,7 +3,7 @@
 # Course: CS372 - Intro to Networks
 # Assignment: Programming Project 3 Traceroute
 # Due Date: 8/11/2024
-# Description: Raw socket implementation of ping traceroute.
+# Description: Raw socket implementation of ping and traceroute.
 
 # #################################################################################################################### #
 # Citation for IcmpHelperLibrary.py:
@@ -80,7 +80,16 @@ class IcmpHelperLibrary:
         __packetSequenceNumber = 0      # Valid values are 0-65535 (unsigned short, 16 bits)
         __ipTimeout = 30
         __ttl = 255                     # Time to live
-
+        __errorDescription = {
+                                (0, 0): "echo reply",
+                                (3, 0): "destination network unreachable",
+                                (3, 1): "destination host unreachable",
+                                (3, 2): "destination protocol unreachable",
+                                (3, 3): "destination port unreachable",
+                                (3, 6): "destination network unknown",
+                                (3, 7): "destination host unknown",
+                                (11, 0): "TTL expired",
+        }
         __DEBUG_IcmpPacket = False      # Allows for debug output
 
         # ############################################################################################################ #
@@ -119,6 +128,12 @@ class IcmpHelperLibrary:
 
         def getResponseReceived(self):
             return self.__responseReceived
+
+        def getDestinationIPAddress(self):
+            return self.__destinationIpAddress
+
+        def getErrorDescription(self, codeTuple):
+            return self.__errorDescription[codeTuple]
 
         # ############################################################################################################ #
         # IcmpPacket Class Setters                                                                                     #
@@ -314,30 +329,12 @@ class IcmpHelperLibrary:
                     # Fetch the ICMP type and code from the received packet
                     icmpType, icmpCode = recvPacket[20:22]
 
-                    if icmpType == 11:                          # TTL Exceeded
-                        print("  TTL=%d    RTT=%.0f ms    Type=%d    Code=%d    %s" %
-                                (
-                                    self.getTtl(),
-                                    (timeReceived - pingStartTime) * 1000,
-                                    icmpType,
-                                    icmpCode,
-                                    addr[0]
-                                )
-                              )
-
-                    elif icmpType == 3:                         # Destination Unreachable
-                        print("  TTL=%d    RTT=%.0f ms    Type=%d    Code=%d    %s" %
-                                  (
-                                      self.getTtl(),
-                                      (timeReceived - pingStartTime) * 1000,
-                                      icmpType,
-                                      icmpCode,
-                                      addr[0]
-                                  )
-                              )
+                    if icmpType == 3 or icmpType == 11:                         # Destination Unreachable or TTL exceeded
+                        print(f"  TTL={self.getTtl()}    RTT={(timeReceived - pingStartTime) * 1000:.2f} ms    Type={icmpType}    Code={icmpCode} ({self.getErrorDescription((icmpType, icmpCode))})    {addr[0]}")
 
                     elif icmpType == 0:                         # Echo Reply
                         icmpReplyPacket = IcmpHelperLibrary.IcmpPacket_EchoReply(recvPacket)
+                        icmpReplyPacket.setPingTimeSent(pingStartTime)
                         self.__validateIcmpReplyPacketWithOriginalPingData(icmpReplyPacket)
                         icmpReplyPacket.printResultToConsole(self.getTtl(), timeReceived, addr)
                         if icmpReplyPacket.isValidResponse():
@@ -407,6 +404,7 @@ class IcmpHelperLibrary:
             self.IcmpIdentifier_isValid = None
             self.IcmpSequence_isValid = None
             self.IcmpData_isValid = None
+            self.pingTimeSent = None
             self.expectedPacketData = {"Sequence": None, "Identifier": None, "Data": None}
 
         # ############################################################################################################ #
@@ -480,6 +478,9 @@ class IcmpHelperLibrary:
         def getExpectedPacketData(self, key):
             return self.expectedPacketData[key]
 
+        def getPingTimeSent(self):
+            return self.pingTimeSent
+
         # ############################################################################################################ #
         # IcmpPacket_EchoReply Setters                                                                                 #
         #                                                                                                              #
@@ -502,6 +503,9 @@ class IcmpHelperLibrary:
         def setExpectedPacketData(self, key, value):
             self.expectedPacketData[key] = value
 
+        def setPingTimeSent(self, time):
+            self.pingTimeSent = time
+
         # ############################################################################################################ #
         # IcmpPacket_EchoReply Private Functions                                                                       #
         #                                                                                                              #
@@ -522,17 +526,13 @@ class IcmpHelperLibrary:
         # ############################################################################################################ #
         def printResultToConsole(self, ttl, timeReceived, addr):
             bytes = struct.calcsize("d")
-            timeSent = struct.unpack("d", self.__recvPacket[28:28 + bytes])[0]
-            print("  TTL=%d    RTT=%.0f ms    Type=%d    Code=%d        Identifier=%d    Sequence Number=%d    %s" %
-                  (
-                      ttl,
-                      (timeReceived - timeSent) * 1000,
-                      self.getIcmpType(),
-                      self.getIcmpCode(),
-                      self.getIcmpIdentifier(),
-                      self.getIcmpSequenceNumber(),
-                      addr[0]
-                  )
+            # timeSent = struct.unpack("d", self.__recvPacket[28:28 + bytes])[0] # this value is not correct ping start time
+            timeSent = self.getPingTimeSent()
+            print(
+                    f"  TTL={ttl}    RTT={(timeReceived - timeSent) * 1000:.2f} ms"
+                    f"    Type={self.getIcmpType()}    Code={self.getIcmpCode()} (echo reply)"
+                    f"        Identifier={self.getIcmpIdentifier()}    "
+                    f"Sequence Number={self.getIcmpSequenceNumber()}    {addr[0]}"
                  )
             if not self.getIcmpIdentifier_isValid():
                 print(f"ERROR: Invalid Identifier!\nExpected:{self.getExpectedPacketData('Identifier')}\nActual:{self.getIcmpIdentifier()}\n")
@@ -569,6 +569,8 @@ class IcmpHelperLibrary:
     def __sendIcmpEchoRequest(self, host, ttl, num_of_pings):
         print("sendIcmpEchoRequest Started...") if self.__DEBUG_IcmpHelperLibrary else 0
         rtt = []
+        if ttl > 50:
+            print(f"Pinging ({host})")
         for i in range(num_of_pings):
             # Build packet
             icmpPacket = IcmpHelperLibrary.IcmpPacket()
@@ -582,7 +584,7 @@ class IcmpHelperLibrary:
             icmpPacket.buildPacket_echoRequest(packetIdentifier, packetSequenceNumber)  # Build ICMP for IP payload
             icmpPacket.setIcmpTarget(host)
             if ttl == 1:
-                print(f"Traceroute to ({host}) {icmpPacket.getIcmpTarget()}")
+                print(f"Traceroute to ({host}) {icmpPacket.getDestinationIPAddress()}")
             icmpPacket.sendEchoRequest()                                                # Build IP
             if icmpPacket.getRtt():
                 rtt.append(icmpPacket.getRtt())
@@ -601,7 +603,10 @@ class IcmpHelperLibrary:
 
             print(f"--- {icmpPacket.getIcmpTarget()} ping statistics ---")
             print(f"{num_of_pings} packets transmitted, {len(rtt)} received, {100*(1-(len(rtt) // num_of_pings))}% packet loss")
-            print(f"rtt min/avg/max = {minRtt:.2f}/{avgRtt:.2f}/{maxRtt:.2f} ms")
+            if len(rtt) == 0:
+                print(f"rtt min/avg/max = {minRtt}/{avgRtt}/{maxRtt}")
+            else:
+                print(f"rtt min/avg/max = {minRtt:.2f}/{avgRtt:.2f}/{maxRtt:.2f} ms")
 
     def __sendIcmpTraceRoute(self, host):
         print("sendIcmpTraceRoute Started...") if self.__DEBUG_IcmpHelperLibrary else 0
@@ -621,7 +626,7 @@ class IcmpHelperLibrary:
     # ################################################################################################################ #
     def sendPing(self, targetHost):
         print("ping Started...") if self.__DEBUG_IcmpHelperLibrary else 0
-        self.__sendIcmpEchoRequest(targetHost, 255, 1)
+        self.__sendIcmpEchoRequest(targetHost, 255, 4)
 
     def traceRoute(self, targetHost):
         print("traceRoute Started...") if self.__DEBUG_IcmpHelperLibrary else 0
@@ -640,12 +645,27 @@ def main():
 
 
     # Choose one of the following by uncommenting out the line
+    # sacramento
     # icmpHelperPing.sendPing("209.233.126.254")
+    # icmpHelperPing.traceRoute("209.233.126.254")
+
     # icmpHelperPing.sendPing("www.google.com")
-    # icmpHelperPing.sendPing("200.10.227.250") # unreachable
+    # icmpHelperPing.traceRoute("www.google.com")
+
+    # Brazil
+    # icmpHelperPing.sendPing("200.10.227.250")
+    # icmpHelperPing.traceRoute("200.10.227.250")
+
+    # boston
     icmpHelperPing.sendPing("gaia.cs.umass.edu")
     # icmpHelperPing.traceRoute("gaia.cs.umass.edu")
+
+    # south africa
+    # icmpHelperPing.sendPing("164.151.129.20")
     # icmpHelperPing.traceRoute("164.151.129.20")
+
+    # new zealand
+    # icmpHelperPing.sendPing("122.56.99.243")
     # icmpHelperPing.traceRoute("122.56.99.243")
 
 
