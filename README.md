@@ -26,26 +26,34 @@ Here is a sample input/output of the traceroute program:
         Attempting to build traceroute for the following hosts:
         google.com
         myspace.com
-
-        Traceroute to (google.com) 172.217.15.238
-          TTL=1    RTT=2.01 ms    Type=11    Code=0 (TTL expired)    10.0.0.1
-          TTL=2    RTT=15.37 ms    Type=11    Code=0 (TTL expired)    10.27.164.115
-          TTL=3    RTT=12.31 ms    Type=11    Code=0 (TTL expired)    96.216.77.9
-          TTL=4    RTT=13.98 ms    Type=11    Code=0 (TTL expired)    24.124.175.33
-          TTL=5    RTT=13.23 ms    Type=11    Code=0 (TTL expired)    24.124.175.41
-          TTL=6    RTT=11.19 ms    Type=11    Code=0 (TTL expired)    24.124.175.214
-          TTL=7    RTT=16.35 ms    Type=11    Code=0 (TTL expired)    69.241.15.222
-          TTL=8    RTT=16.96 ms    Type=11    Code=0 (TTL expired)    142.251.64.231
-          TTL=9    RTT=12.75 ms    Type=11    Code=0 (TTL expired)    216.239.54.189
-          TTL=10    RTT=13.54 ms    Type=0    Code=0 (echo reply)        Identifier=1097    Sequence Number=0    172.217.7.46
+        
+        Traceroute to (google.com) 142.250.69.206
+          TTL=1    RTT=48.12 ms    Type=11    Code=0 (TTL expired)    10.192.5.2
+          TTL=2    RTT=44.39 ms    Type=11    Code=0 (TTL expired)    10.194.222.17
+          TTL=3    RTT=45.57 ms    Type=11    Code=0 (TTL expired)    10.192.89.97
+          TTL=4    RTT=44.19 ms    Type=11    Code=0 (TTL expired)    128.193.107.20
+          TTL=5    RTT=45.29 ms    Type=11    Code=0 (TTL expired)    128.193.6.212
+          TTL=6    RTT=48.45 ms    Type=11    Code=0 (TTL expired)    128.193.88.57
+          TTL=7    RTT=47.62 ms    Type=11    Code=0 (TTL expired)    207.98.127.244
+          TTL=8    RTT=46.67 ms    Type=11    Code=0 (TTL expired)    207.98.126.62
+          TTL=9    RTT=46.05 ms    Type=11    Code=0 (TTL expired)    207.98.127.246
+          *        *        *        *        *    Request timed out.
+          *        *        *        *        *    Request timed out (By Exception).
+          TTL=11    RTT=51.80 ms    Type=11    Code=0 (TTL expired)    192.178.105.129
+          TTL=12    RTT=53.92 ms    Type=11    Code=0 (TTL expired)    142.251.48.213
+          TTL=13    RTT=48.23 ms    Type=0    Code=0 (echo reply)        Identifier=1411    Sequence Number=0    142.250.69.206
         Traceroute to (myspace.com) 34.111.176.156
-          TTL=1    RTT=1.97 ms    Type=11    Code=0 (TTL expired)    10.0.0.1
-          TTL=2    RTT=14.68 ms    Type=11    Code=0 (TTL expired)    10.27.164.115
-          TTL=3    RTT=10.47 ms    Type=11    Code=0 (TTL expired)    96.216.77.13
-          TTL=4    RTT=10.24 ms    Type=11    Code=0 (TTL expired)    24.124.175.85
-          TTL=5    RTT=18.22 ms    Type=11    Code=0 (TTL expired)    24.124.175.25
-          TTL=6    RTT=12.15 ms    Type=11    Code=0 (TTL expired)    24.124.175.226
-          TTL=7    RTT=12.68 ms    Type=11    Code=0 (TTL expired)    68.87.78.178
-          TTL=8    RTT=14.11 ms    Type=11    Code=0 (TTL expired)    172.253.50.81
-          TTL=9    RTT=13.96 ms    Type=11    Code=0 (TTL expired)    216.239.48.235
-          TTL=10    RTT=13.78 ms    Type=0    Code=0 (echo reply)        Identifier=1097    Sequence Number=0    34.111.176.156
+          TTL=1    RTT=44.18 ms    Type=11    Code=0 (TTL expired)    10.192.5.2
+          TTL=2    RTT=43.87 ms    Type=11    Code=0 (TTL expired)    10.194.222.17
+          TTL=3    RTT=48.63 ms    Type=11    Code=0 (TTL expired)    10.192.89.97
+          TTL=4    RTT=47.78 ms    Type=11    Code=0 (TTL expired)    128.193.107.20
+          TTL=5    RTT=45.92 ms    Type=11    Code=0 (TTL expired)    128.193.6.212
+          TTL=6    RTT=44.87 ms    Type=11    Code=0 (TTL expired)    128.193.88.57
+          TTL=7    RTT=44.12 ms    Type=11    Code=0 (TTL expired)    207.98.127.244
+          TTL=8    RTT=49.20 ms    Type=11    Code=0 (TTL expired)    207.98.126.62
+          TTL=9    RTT=47.03 ms    Type=11    Code=0 (TTL expired)    207.98.127.246
+          *        *        *        *        *    Request timed out.
+          *        *        *        *        *    Request timed out (By Exception).
+          TTL=11    RTT=55.30 ms    Type=11    Code=0 (TTL expired)    192.178.105.35
+          TTL=12    RTT=54.70 ms    Type=11    Code=0 (TTL expired)    142.251.241.137
+          TTL=13    RTT=53.10 ms    Type=0    Code=0 (echo reply)        Identifier=1411    Sequence Number=0    34.111.176.156
