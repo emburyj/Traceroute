@@ -11,13 +11,13 @@ The Ping program accepts a hostname as a command line arguments and uses the sen
 Here is a sample input/output of the ping program:
         sudo python3 ping.py google.com
         Pinging (google.com)
-      TTL=255    RTT=19.68 ms    Type=0    Code=0 (echo reply)        Identifier=1094    Sequence Number=0    172.217.164.14
-      TTL=255    RTT=12.79 ms    Type=0    Code=0 (echo reply)        Identifier=1094    Sequence Number=1    142.250.65.110
-      TTL=255    RTT=13.49 ms    Type=0    Code=0 (echo reply)        Identifier=1094    Sequence Number=2    172.217.0.78
-      TTL=255    RTT=16.65 ms    Type=0    Code=0 (echo reply)        Identifier=1094    Sequence Number=3    172.217.15.238
-    --- google.com ping statistics ---
-    4 packets transmitted, 4 received, 0% packet loss
-    rtt min/avg/max = 12.79/15.66/19.68 ms
+        TTL=255    RTT=19.68 ms    Type=0    Code=0 (echo reply)        Identifier=1094    Sequence Number=0    172.217.164.14
+        TTL=255    RTT=12.79 ms    Type=0    Code=0 (echo reply)        Identifier=1094    Sequence Number=1    142.250.65.110
+        TTL=255    RTT=13.49 ms    Type=0    Code=0 (echo reply)        Identifier=1094    Sequence Number=2    172.217.0.78
+        TTL=255    RTT=16.65 ms    Type=0    Code=0 (echo reply)        Identifier=1094    Sequence Number=3    172.217.15.238
+        --- google.com ping statistics ---
+        4 packets transmitted, 4 received, 0% packet loss
+        rtt min/avg/max = 12.79/15.66/19.68 ms
 
 Here is a sample input/output of the traceroute program:
 
