@@ -90,6 +90,7 @@ class IcmpHelperLibrary:
                                 (3, 7): "destination host unknown",
                                 (11, 0): "TTL expired",
         }
+        responseAddr = None
         __DEBUG_IcmpPacket = False      # Allows for debug output
 
         # ############################################################################################################ #
@@ -135,6 +136,9 @@ class IcmpHelperLibrary:
         def getErrorDescription(self, codeTuple):
             return self.__errorDescription[codeTuple]
 
+        def getResponseAddr(self):
+            return self.responseAddr
+
         # ############################################################################################################ #
         # IcmpPacket Class Setters                                                                                     #
         #                                                                                                              #
@@ -173,6 +177,9 @@ class IcmpHelperLibrary:
 
         def setResponseReceived(self, booleanValue):
             self.__responseReceived = booleanValue
+
+        def setResponseAddr(self, address):
+            self.responseAddr = address
 
         # ############################################################################################################ #
         # IcmpPacket Class Private Functions                                                                           #
@@ -333,6 +340,8 @@ class IcmpHelperLibrary:
                         print(f"  TTL={self.getTtl()}    RTT={(timeReceived - pingStartTime) * 1000:.2f} ms    Type={icmpType}    Code={icmpCode} ({self.getErrorDescription((icmpType, icmpCode))})    {addr[0]}")
 
                     elif icmpType == 0:                         # Echo Reply
+                        if len(addr) > 1:
+                            self.setResponseAddr(addr[0])
                         icmpReplyPacket = IcmpHelperLibrary.IcmpPacket_EchoReply(recvPacket)
                         icmpReplyPacket.setPingTimeSent(pingStartTime)
                         self.__validateIcmpReplyPacketWithOriginalPingData(icmpReplyPacket)
@@ -406,6 +415,7 @@ class IcmpHelperLibrary:
             self.IcmpData_isValid = None
             self.pingTimeSent = None
             self.expectedPacketData = {"Sequence": None, "Identifier": None, "Data": None}
+
 
         # ############################################################################################################ #
         # IcmpPacket_EchoReply Getters                                                                                 #
@@ -590,6 +600,9 @@ class IcmpHelperLibrary:
                 rtt.append(icmpPacket.getRtt())
             icmpPacket.printIcmpPacketHeader_hex() if self.__DEBUG_IcmpHelperLibrary else 0
             icmpPacket.printIcmpPacket_hex() if self.__DEBUG_IcmpHelperLibrary else 0
+            if ttl < 50 and icmpPacket.getResponseAddr() == icmpPacket.getDestinationIPAddress():
+                # print("Destination reached!")
+                return 0
             # we should be confirming values are correct, such as identifier and sequence number and data
         if ttl > 50:
             if len(rtt) == 0:
@@ -612,10 +625,11 @@ class IcmpHelperLibrary:
         print("sendIcmpTraceRoute Started...") if self.__DEBUG_IcmpHelperLibrary else 0
         # Build code for trace route here
 
-        receivedPackets = []
         ttlMax = 50
         for i in range(1, ttlMax + 1):
-            self.__sendIcmpEchoRequest(host, i, 1)
+            destination_flag = self.__sendIcmpEchoRequest(host, i, 1)
+            if destination_flag == 0:
+                break
 
     # ################################################################################################################ #
     # IcmpHelperLibrary Public Functions                                                                               #
